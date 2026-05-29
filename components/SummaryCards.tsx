@@ -12,27 +12,30 @@ interface Props {
 export function SummaryCards({ summary }: Props) {
   const cards = [
     {
-      label: 'Valor total',
+      label: 'Valor cartera',
       value: formatCurrency(summary.totalValueEur),
       sub: `Invertido: ${formatCurrency(summary.totalInvestedEur)}`,
       icon: Wallet,
       accent: 'bg-blue-50 text-blue-600',
     },
     {
-      label: 'Rentabilidad total',
+      label: 'Rentab. no realizada',
       value: formatCurrency(summary.totalReturnEur),
-      sub: null,
+      sub: 'Posiciones abiertas',
       badge: summary.totalReturnPct,
       icon: TrendingUp,
       accent: summary.totalReturnEur >= 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-500',
     },
     {
-      label: 'Mejor posición',
-      value: summary.bestPosition?.name ?? '—',
-      sub: summary.bestPosition?.ticker,
-      badge: summary.bestPosition?.returnPct,
+      label: 'Rentab. realizada',
+      value: formatCurrency(summary.totalRealizedEur),
+      sub:
+        summary.yearlyPerformance.length > 0
+          ? `${summary.yearlyPerformance.length} año${summary.yearlyPerformance.length === 1 ? '' : 's'} con ventas`
+          : 'Sin ventas registradas',
+      badge: summary.avgAnnualReturnPct,
       icon: Award,
-      accent: 'bg-purple-50 text-purple-600',
+      accent: summary.totalRealizedEur >= 0 ? 'bg-purple-50 text-purple-600' : 'bg-red-50 text-red-500',
     },
     {
       label: 'Posiciones abiertas',

@@ -32,6 +32,40 @@ export interface Position {
   transactions: Transaction[];
 }
 
+export interface ClosedLot {
+  ticker: string;
+  name: string;
+  assetType: AssetType;
+  buyDate: string;
+  sellDate: string;
+  quantity: number;
+  buyPrice: number;
+  sellPrice: number;
+  currency: string;
+  costEur: number;
+  proceedsEur: number;
+  realizedEur: number;
+  returnPct: number;
+}
+
+export interface YearlyPerformance {
+  year: number;
+  realizedEur: number;
+  investedEur: number;
+  proceedsEur: number;
+  returnPct: number;
+  operations: number;
+  lots: ClosedLot[];
+}
+
+export interface OpenPerformance {
+  totalInvestedEur: number;
+  totalValueEur: number;
+  totalReturnEur: number;
+  totalReturnPct: number;
+  positions: number;
+}
+
 export interface PortfolioSummary {
   totalValueEur: number;
   totalInvestedEur: number;
@@ -41,6 +75,10 @@ export interface PortfolioSummary {
   lastUpdated: string;
   bestPosition: Position | null;
   worstPosition: Position | null;
+  yearlyPerformance: YearlyPerformance[];
+  open: OpenPerformance;
+  totalRealizedEur: number;
+  avgAnnualReturnPct: number;
 }
 
 export interface FinancialRatios {

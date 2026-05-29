@@ -1,5 +1,10 @@
 import { parseExcelBuffer, parseCsvText } from './excel-parser';
-import { aggregatePositions, buildPortfolioSummary } from './calculations';
+import {
+  aggregatePositions,
+  buildPortfolioSummary,
+  computeClosedLots,
+  buildYearlyPerformance,
+} from './calculations';
 import { getQuote, getExchangeRates, convertToEur } from './financial-data';
 import type { Position, PortfolioSummary } from './types';
 
@@ -50,8 +55,10 @@ export async function fetchPortfolio(): Promise<PortfolioSummary> {
     throw new Error('No se encontraron transacciones en el archivo.');
   }
 
-  const rawPositions = aggregatePositions(transactions);
   const rates = await getExchangeRates();
+  const rawPositions = aggregatePositions(transactions);
+  const closedLots = computeClosedLots(transactions, rates);
+  const yearlyPerformance = buildYearlyPerformance(closedLots);
 
   const positions: Position[] = await Promise.all(
     rawPositions.map(async (raw) => {
@@ -79,5 +86,5 @@ export async function fetchPortfolio(): Promise<PortfolioSummary> {
     })
   );
 
-  return buildPortfolioSummary(positions);
+  return buildPortfolioSummary(positions, yearlyPerformance);
 }

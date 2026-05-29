@@ -6,6 +6,7 @@ import { AllocationChart } from '@/components/AllocationChart';
 import { ReturnChart } from '@/components/ReturnChart';
 import { PositionTable } from '@/components/PositionTable';
 import { RefreshButton } from '@/components/RefreshButton';
+import { YearlyPerformance } from '@/components/YearlyPerformance';
 import { AlertCircle, Download } from 'lucide-react';
 import type { PortfolioSummary } from '@/lib/types';
 
@@ -57,6 +58,11 @@ function Dashboard({ summary }: { summary: PortfolioSummary }) {
   return (
     <div className="space-y-6">
       <SummaryCards summary={summary} />
+      <YearlyPerformance
+        yearly={summary.yearlyPerformance}
+        totalRealizedEur={summary.totalRealizedEur}
+        avgAnnualReturnPct={summary.avgAnnualReturnPct}
+      />
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <AllocationChart positions={summary.positions} />
         <ReturnChart positions={summary.positions} />
