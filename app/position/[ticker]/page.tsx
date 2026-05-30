@@ -1,12 +1,15 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { fetchPortfolio } from '@/lib/data';
-import { getRatios } from '@/lib/financial-data';
+import { getRatios, getNews, getDividendHistory } from '@/lib/financial-data';
 import { formatCurrency, formatShares, formatDateTime, ASSET_TYPE_COLORS } from '@/lib/utils';
 import { ReturnBadge } from '@/components/ReturnBadge';
 import { PriceRangeBar } from '@/components/PriceRangeBar';
 import { RatioGrid } from '@/components/RatioGrid';
 import { TransactionHistory } from '@/components/TransactionHistory';
+import { NewsList } from '@/components/NewsList';
+import { PriceHistoryChart } from '@/components/PriceHistoryChart';
+import { DividendHistory } from '@/components/DividendHistory';
 import { ArrowLeft } from 'lucide-react';
 import type { Position } from '@/lib/types';
 
@@ -23,9 +26,11 @@ function MetricCard({ label, value, sub }: { label: string; value: string; sub?:
 }
 
 async function PositionContent({ ticker }: { ticker: string }) {
-  const [summary, ratios] = await Promise.all([
+  const [summary, ratios, news, dividends] = await Promise.all([
     fetchPortfolio(),
     getRatios(ticker),
+    getNews(ticker, 6),
+    getDividendHistory(ticker, '5y'),
   ]);
 
   const position: Position | undefined = summary.positions.find(
@@ -97,6 +102,13 @@ async function PositionContent({ ticker }: { ticker: string }) {
         />
       </div>
 
+      {/* Historical price chart */}
+      <PriceHistoryChart
+        ticker={position.ticker}
+        avgCost={position.avgCost}
+        currency={position.currency}
+      />
+
       {/* 52-week range */}
       {ratios?.fiftyTwoWeekLow != null && ratios?.fiftyTwoWeekHigh != null && (
         <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
@@ -117,6 +129,24 @@ async function PositionContent({ ticker }: { ticker: string }) {
           <RatioGrid ratios={ratios} />
         </div>
       )}
+
+      {/* Dividend history */}
+      {dividends.length > 0 && (
+        <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
+          <h2 className="text-sm font-semibold text-gray-700 mb-4">Dividendos cobrados</h2>
+          <DividendHistory
+            dividends={dividends}
+            shares={position.shares}
+            currency={position.currency}
+          />
+        </div>
+      )}
+
+      {/* Latest news */}
+      <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
+        <h2 className="text-sm font-semibold text-gray-700 mb-4">Noticias recientes</h2>
+        <NewsList items={news} />
+      </div>
 
       {/* Transaction history */}
       <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">

@@ -30,6 +30,8 @@ export interface Position {
   weight: number;
   dayChangePct: number;
   transactions: Transaction[];
+  sector?: string;
+  industry?: string;
 }
 
 export interface ClosedLot {
@@ -110,10 +112,44 @@ export interface FinancialRatios {
   exchange?: string;
   sector?: string;
   industry?: string;
+  // Earnings & analyst data
+  nextEarningsDate?: string; // ISO date string
+  earningsEstimate?: number;
+  targetMeanPrice?: number;
+  targetHighPrice?: number;
+  targetLowPrice?: number;
+  numberOfAnalystOpinions?: number;
+  recommendationKey?: string;
+  recommendationMean?: number;
+  // Extra fundamentals
+  roe?: number;
+  debtToEquity?: number;
+  enterpriseToEbitda?: number;
 }
 
 export interface QuoteResult {
   price: number;
   dayChangePct: number;
   currency: string;
+}
+
+export interface PricePoint {
+  date: string; // ISO date string
+  close: number;
+}
+
+export type PriceRange = '1mo' | '3mo' | '6mo' | '1y' | '5y' | 'max';
+
+export interface DividendEvent {
+  date: string;
+  amount: number;
+}
+
+export interface NewsItem {
+  id: string;
+  title: string;
+  publisher?: string;
+  link: string;
+  publishedAt: string; // ISO date string
+  thumbnail?: string;
 }

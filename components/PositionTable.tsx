@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { ArrowUpDown, ArrowUp, ArrowDown, ExternalLink } from 'lucide-react';
+import { ArrowUpDown, ArrowUp, ArrowDown, ExternalLink, Search } from 'lucide-react';
 import { formatCurrency, formatShares, formatPct, ASSET_TYPE_COLORS } from '@/lib/utils';
 import { ReturnBadge } from './ReturnBadge';
 import type { Position } from '@/lib/types';
@@ -36,6 +36,8 @@ function TypeBadge({ type }: { type: string }) {
 export function PositionTable({ positions }: Props) {
   const [sortKey, setSortKey] = useState<SortKey>('currentValueEur');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
+  const [query, setQuery] = useState('');
+  const [typeFilter, setTypeFilter] = useState<string>('all');
 
   function toggleSort(key: SortKey) {
     if (sortKey === key) {
@@ -46,7 +48,24 @@ export function PositionTable({ positions }: Props) {
     }
   }
 
-  const sorted = [...positions].sort((a, b) => {
+  const assetTypes = useMemo(
+    () => Array.from(new Set(positions.map(p => p.assetType))).sort(),
+    [positions],
+  );
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return positions.filter(p => {
+      if (typeFilter !== 'all' && p.assetType !== typeFilter) return false;
+      if (!q) return true;
+      return (
+        p.ticker.toLowerCase().includes(q) ||
+        p.name.toLowerCase().includes(q)
+      );
+    });
+  }, [positions, query, typeFilter]);
+
+  const sorted = [...filtered].sort((a, b) => {
     let av: number | string = a[sortKey] as number | string;
     let bv: number | string = b[sortKey] as number | string;
     if (sortKey === 'name') { av = a.name; bv = b.name; }
@@ -72,8 +91,32 @@ export function PositionTable({ positions }: Props) {
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-      <div className="px-5 py-4 border-b border-gray-100">
-        <h2 className="text-sm font-semibold text-gray-700">Posiciones ({positions.length})</h2>
+      <div className="px-5 py-4 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <h2 className="text-sm font-semibold text-gray-700">
+          Posiciones ({sorted.length}{sorted.length !== positions.length && `/${positions.length}`})
+        </h2>
+        <div className="flex items-center gap-2">
+          <div className="relative">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
+            <input
+              type="search"
+              placeholder="Buscar ticker o nombre…"
+              value={query}
+              onChange={e => setQuery(e.target.value)}
+              className="pl-8 pr-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 w-56"
+            />
+          </div>
+          <select
+            value={typeFilter}
+            onChange={e => setTypeFilter(e.target.value)}
+            className="text-sm border border-gray-200 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300"
+          >
+            <option value="all">Todos</option>
+            {assetTypes.map(t => (
+              <option key={t} value={t}>{t}</option>
+            ))}
+          </select>
+        </div>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">

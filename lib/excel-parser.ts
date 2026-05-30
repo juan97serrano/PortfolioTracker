@@ -32,6 +32,13 @@ function colIdx(headers: string[], names: string[]): number {
   return -1;
 }
 
+// ISO 4217 currency codes are 3 uppercase letters. Anything else (numbers,
+// blanks, misaligned columns) falls back to EUR so the UI does not crash.
+function normalizeCurrency(value: unknown): string {
+  const s = String(value ?? '').trim().toUpperCase();
+  return /^[A-Z]{3}$/.test(s) ? s : 'EUR';
+}
+
 export async function parseExcelBuffer(buffer: ArrayBuffer): Promise<Transaction[]> {
   const XLSX = await import('xlsx');
   const workbook = XLSX.read(buffer, { type: 'array', cellDates: false });
@@ -87,7 +94,7 @@ export async function parseExcelBuffer(buffer: ArrayBuffer): Promise<Transaction
       quantity:   qty,
       price,
       commission: Number(row[commCol]) || 0,
-      currency:   String(row[currCol] ?? 'EUR').trim().toUpperCase(),
+      currency:   normalizeCurrency(row[currCol]),
     });
   }
 
@@ -131,7 +138,7 @@ export async function parseCsvText(text: string): Promise<Transaction[]> {
       quantity:   qty,
       price,
       commission: parseFloat((cols[commCol] ?? '0').replace(',', '.')) || 0,
-      currency:   (cols[currCol] ?? 'EUR').trim().toUpperCase(),
+      currency:   normalizeCurrency(cols[currCol]),
     });
   }
 

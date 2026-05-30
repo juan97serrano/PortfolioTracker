@@ -6,12 +6,17 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function formatCurrency(value: number, currency = 'EUR'): string {
-  return new Intl.NumberFormat('es-ES', {
-    style: 'currency',
-    currency,
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(value);
+  const safe = /^[A-Z]{3}$/.test(currency) ? currency : 'EUR';
+  try {
+    return new Intl.NumberFormat('es-ES', {
+      style: 'currency',
+      currency: safe,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(value);
+  } catch {
+    return `${value.toFixed(2)} ${safe}`;
+  }
 }
 
 export function formatPct(value: number, showSign = true): string {
@@ -36,6 +41,42 @@ export function formatLargeNumber(value: number): string {
 export function formatDate(date: Date | string): string {
   const d = typeof date === 'string' ? new Date(date) : date;
   return new Intl.DateTimeFormat('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(d);
+}
+
+export function formatRelativeFuture(isoString: string): string {
+  const then = new Date(isoString).getTime();
+  if (Number.isNaN(then)) return '';
+  const diffMs = then - Date.now();
+  if (diffMs < 0) {
+    const daysAgo = Math.round(-diffMs / 86_400_000);
+    if (daysAgo === 0) return 'hoy';
+    if (daysAgo === 1) return 'ayer';
+    return `hace ${daysAgo} d`;
+  }
+  const mins = Math.round(diffMs / 60_000);
+  if (mins < 60) return `en ${mins} min`;
+  const hours = Math.round(mins / 60);
+  if (hours < 24) return `en ${hours} h`;
+  const days = Math.round(hours / 24);
+  if (days === 0) return 'hoy';
+  if (days === 1) return 'mañana';
+  if (days < 30) return `en ${days} d`;
+  const months = Math.round(days / 30);
+  return `en ${months} m`;
+}
+
+export function formatRelativeTime(isoString: string): string {
+  const then = new Date(isoString).getTime();
+  if (Number.isNaN(then)) return '';
+  const diffMs = Date.now() - then;
+  const mins = Math.round(diffMs / 60_000);
+  if (mins < 1) return 'hace un momento';
+  if (mins < 60) return `hace ${mins} min`;
+  const hours = Math.round(mins / 60);
+  if (hours < 24) return `hace ${hours} h`;
+  const days = Math.round(hours / 24);
+  if (days < 7) return `hace ${days} d`;
+  return formatDate(isoString);
 }
 
 export function formatDateTime(isoString: string): string {

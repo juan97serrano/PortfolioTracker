@@ -1,6 +1,6 @@
 'use client';
 
-import { formatLargeNumber } from '@/lib/utils';
+import { formatCurrency, formatDate, formatLargeNumber, formatPct, formatRelativeFuture } from '@/lib/utils';
 import type { FinancialRatios } from '@/lib/types';
 
 interface RatioItem {
@@ -31,6 +31,14 @@ function money(v?: number): string | undefined {
   return v != null ? formatLargeNumber(v) : undefined;
 }
 
+const RECOMMENDATION_LABELS: Record<string, { label: string; color: string }> = {
+  strong_buy:   { label: 'Compra fuerte', color: 'text-emerald-700' },
+  buy:          { label: 'Compra',        color: 'text-emerald-600' },
+  hold:         { label: 'Mantener',      color: 'text-gray-600'    },
+  underperform: { label: 'Reducir',       color: 'text-orange-600'  },
+  sell:         { label: 'Vender',        color: 'text-red-600'     },
+};
+
 interface Props {
   ratios: FinancialRatios;
 }
@@ -42,16 +50,19 @@ export function RatioGrid({ ratios }: Props) {
     { label: 'PEG', value: num(ratios.peg), hint: 'P/E ajustado al crecimiento' },
     { label: 'Precio / Libro', value: num(ratios.priceToBook), hint: 'Price to Book' },
     { label: 'Precio / Ventas', value: num(ratios.priceToSales), hint: 'Price to Sales' },
-    { label: 'EPS (TTM)', value: num(ratios.eps), hint: 'Beneficio por acción' },
+    { label: 'EV / EBITDA', value: num(ratios.enterpriseToEbitda), hint: 'Enterprise Value / EBITDA' },
   ];
 
   const fundamentals: RatioItem[] = [
     { label: 'Capitalización', value: money(ratios.marketCap), hint: 'Market Cap' },
     { label: 'Beta', value: num(ratios.beta), hint: 'Volatilidad vs mercado' },
     { label: 'Dividendo', value: pct(ratios.dividendYield), hint: 'Rentabilidad por dividendo' },
+    { label: 'ROE', value: pct(ratios.roe), hint: 'Return on Equity' },
+    { label: 'Deuda / Patrimonio', value: num(ratios.debtToEquity), hint: 'Apalancamiento' },
     { label: 'Margen neto', value: pct(ratios.profitMargin), hint: 'Profit Margin' },
     { label: 'Crecimiento ingresos', value: pct(ratios.revenueGrowth), hint: 'YoY Revenue Growth' },
     { label: 'Crecimiento beneficio', value: pct(ratios.earningsGrowth), hint: 'YoY Earnings Growth' },
+    { label: 'EPS (TTM)', value: num(ratios.eps), hint: 'Beneficio por acción' },
   ];
 
   const trading: RatioItem[] = [
@@ -61,8 +72,99 @@ export function RatioGrid({ ratios }: Props) {
     { label: 'Media 200 días', value: num(ratios.twoHundredDayAvg), hint: '200-day SMA' },
   ];
 
+  const hasEarningsSection =
+    ratios.nextEarningsDate != null ||
+    ratios.targetMeanPrice != null ||
+    ratios.recommendationKey != null;
+
+  const currency = ratios.currency ?? 'USD';
+  const upsidePct =
+    ratios.targetMeanPrice != null && ratios.currentPrice != null && ratios.currentPrice > 0
+      ? (ratios.targetMeanPrice / ratios.currentPrice - 1) * 100
+      : undefined;
+  const recommendation = ratios.recommendationKey
+    ? RECOMMENDATION_LABELS[ratios.recommendationKey.toLowerCase()]
+    : undefined;
+
   return (
     <div className="space-y-6">
+      {hasEarningsSection && (
+        <div>
+          <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
+            Earnings y analistas
+          </h3>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="bg-gray-50 rounded-xl p-4">
+              <div className="text-xs text-gray-500 mb-1">Próximos resultados</div>
+              {ratios.nextEarningsDate ? (
+                <>
+                  <div className="text-lg font-bold text-gray-900 tabular-nums">
+                    {formatDate(ratios.nextEarningsDate)}
+                  </div>
+                  <div className="text-xs text-gray-400 mt-0.5">
+                    {formatRelativeFuture(ratios.nextEarningsDate)}
+                  </div>
+                </>
+              ) : (
+                <div className="text-sm text-gray-300">N/D</div>
+              )}
+            </div>
+
+            <RatioCard
+              label="EPS estimado"
+              value={num(ratios.earningsEstimate)}
+              hint="Consenso analistas"
+            />
+
+            <div className="bg-gray-50 rounded-xl p-4">
+              <div className="text-xs text-gray-500 mb-1">Precio objetivo</div>
+              {ratios.targetMeanPrice != null ? (
+                <>
+                  <div className="text-lg font-bold text-gray-900 tabular-nums">
+                    {formatCurrency(ratios.targetMeanPrice, currency)}
+                  </div>
+                  {upsidePct != null && (
+                    <div
+                      className={`text-xs mt-0.5 tabular-nums ${
+                        upsidePct >= 0 ? 'text-emerald-600' : 'text-red-500'
+                      }`}
+                    >
+                      {formatPct(upsidePct)} vs actual
+                    </div>
+                  )}
+                  {ratios.targetLowPrice != null && ratios.targetHighPrice != null && (
+                    <div className="text-xs text-gray-400 mt-0.5 tabular-nums">
+                      Rango: {formatCurrency(ratios.targetLowPrice, currency)} – {formatCurrency(ratios.targetHighPrice, currency)}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="text-sm text-gray-300">N/D</div>
+              )}
+            </div>
+
+            <div className="bg-gray-50 rounded-xl p-4">
+              <div className="text-xs text-gray-500 mb-1">Recomendación</div>
+              {recommendation ? (
+                <>
+                  <div className={`text-lg font-bold ${recommendation.color}`}>
+                    {recommendation.label}
+                  </div>
+                  <div className="text-xs text-gray-400 mt-0.5">
+                    {ratios.numberOfAnalystOpinions != null
+                      ? `${ratios.numberOfAnalystOpinions} analistas`
+                      : 'Consenso analistas'}
+                    {ratios.recommendationMean != null && ` · ${ratios.recommendationMean.toFixed(1)}/5`}
+                  </div>
+                </>
+              ) : (
+                <div className="text-sm text-gray-300">N/D</div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       <div>
         <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Valoración</h3>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">

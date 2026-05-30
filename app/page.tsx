@@ -7,7 +7,12 @@ import { ReturnChart } from '@/components/ReturnChart';
 import { PositionTable } from '@/components/PositionTable';
 import { RefreshButton } from '@/components/RefreshButton';
 import { YearlyPerformance } from '@/components/YearlyPerformance';
-import { AlertCircle, Download } from 'lucide-react';
+import { TopMovers } from '@/components/TopMovers';
+import { ConcentrationAlert } from '@/components/ConcentrationAlert';
+import { GroupedAllocationChart } from '@/components/SectorChart';
+import { PortfolioHistoryChart } from '@/components/PortfolioHistoryChart';
+import { ThemeToggle } from '@/components/ThemeToggle';
+import { AlertCircle, Download, GitCompare } from 'lucide-react';
 import type { PortfolioSummary } from '@/lib/types';
 
 export const revalidate = 0;
@@ -58,6 +63,9 @@ function Dashboard({ summary }: { summary: PortfolioSummary }) {
   return (
     <div className="space-y-6">
       <SummaryCards summary={summary} />
+      <ConcentrationAlert positions={summary.positions} />
+      <PortfolioHistoryChart />
+      <TopMovers positions={summary.positions} />
       <YearlyPerformance
         yearly={summary.yearlyPerformance}
         totalRealizedEur={summary.totalRealizedEur}
@@ -66,6 +74,18 @@ function Dashboard({ summary }: { summary: PortfolioSummary }) {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <AllocationChart positions={summary.positions} />
         <ReturnChart positions={summary.positions} />
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <GroupedAllocationChart
+          positions={summary.positions}
+          mode="sector"
+          title="Diversificación por sector"
+        />
+        <GroupedAllocationChart
+          positions={summary.positions}
+          mode="assetType"
+          title="Diversificación por tipo de activo"
+        />
       </div>
       <PositionTable positions={summary.positions} />
     </div>
@@ -95,6 +115,13 @@ export default async function Home() {
         </div>
         <div className="flex items-center gap-3">
           <Link
+            href="/compare"
+            className="inline-flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-800 transition-colors"
+          >
+            <GitCompare className="h-3.5 w-3.5" />
+            Comparar
+          </Link>
+          <Link
             href="/api/template"
             download
             className="inline-flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-800 transition-colors"
@@ -102,6 +129,7 @@ export default async function Home() {
             <Download className="h-3.5 w-3.5" />
             Plantilla
           </Link>
+          <ThemeToggle />
           <RefreshButton />
         </div>
       </header>

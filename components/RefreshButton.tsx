@@ -11,6 +11,11 @@ export function RefreshButton() {
 
   async function handleRefresh() {
     setLoading(true);
+    try {
+      await fetch('/api/refresh', { method: 'POST' });
+    } catch {
+      // ignore — we still want to refresh the route
+    }
     router.refresh();
     setTimeout(() => setLoading(false), 1500);
   }

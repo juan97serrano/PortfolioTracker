@@ -5,7 +5,7 @@ import {
   computeClosedLots,
   buildYearlyPerformance,
 } from './calculations';
-import { getQuote, getExchangeRates, convertToEur } from './financial-data';
+import { getQuote, getAssetProfile, getExchangeRates, convertToEur } from './financial-data';
 import type { Position, PortfolioSummary } from './types';
 
 function getDriveDownloadUrl(raw: string): string {
@@ -33,7 +33,9 @@ async function fetchPortfolioFile(): Promise<{ buffer?: ArrayBuffer; csv?: strin
   if (!raw) throw new Error('PORTFOLIO_URL no está configurado.');
 
   const url = getDriveDownloadUrl(raw);
-  const res = await fetch(url, { next: { revalidate: 300 } });
+  // Always fetch the latest Sheet — the file is small and Google Sheets is fast.
+  // Quotes and rates keep their own per-source cache.
+  const res = await fetch(url, { cache: 'no-store' });
 
   if (!res.ok) throw new Error(`Error al descargar el archivo: ${res.status} ${res.statusText}`);
 
@@ -62,7 +64,10 @@ export async function fetchPortfolio(): Promise<PortfolioSummary> {
 
   const positions: Position[] = await Promise.all(
     rawPositions.map(async (raw) => {
-      const quote = await getQuote(raw.ticker);
+      const [quote, profile] = await Promise.all([
+        getQuote(raw.ticker),
+        getAssetProfile(raw.ticker),
+      ]);
       const currentPrice     = quote?.price ?? 0;
       const priceCurrency    = quote?.currency ?? raw.currency;
       const currentValue     = currentPrice * raw.shares;
@@ -82,6 +87,8 @@ export async function fetchPortfolio(): Promise<PortfolioSummary> {
         returnPct,
         dayChangePct: quote?.dayChangePct ?? 0,
         weight: 0, // filled in buildPortfolioSummary
+        sector:       profile?.sector,
+        industry:     profile?.industry,
       };
     })
   );

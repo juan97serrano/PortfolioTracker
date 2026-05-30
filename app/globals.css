@@ -7,6 +7,11 @@
   --foreground: #0f172a;
 }
 
+html.dark {
+  --background: #0f172a;
+  --foreground: #f1f5f9;
+}
+
 body {
   background-color: var(--background);
   color: var(--foreground);
@@ -26,3 +31,56 @@ body {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+html.dark ::-webkit-scrollbar-thumb { background: #475569; }
+html.dark ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+
+/*
+ * Dark mode overrides — instead of sprinkling `dark:` variants across every
+ * component, we remap the most common neutral Tailwind classes here. Accent
+ * colors (emerald/red/blue/amber) are kept as-is since they read well on dark.
+ */
+html.dark .bg-white         { background-color: rgb(30 41 59); }        /* slate-800 */
+html.dark .bg-slate-50      { background-color: rgb(15 23 42); }        /* slate-900 */
+html.dark .bg-gray-50       { background-color: rgb(51 65 85); }        /* slate-700 */
+html.dark .hover\:bg-gray-50:hover { background-color: rgb(51 65 85); }
+html.dark .bg-gray-100      { background-color: rgb(71 85 105); }       /* slate-600 */
+
+html.dark .border-gray-50   { border-color: rgb(51 65 85); }
+html.dark .border-gray-100  { border-color: rgb(51 65 85); }
+html.dark .border-gray-200  { border-color: rgb(71 85 105); }
+
+html.dark .divide-gray-50 > :not([hidden]) ~ :not([hidden])  { border-color: rgb(51 65 85); }
+html.dark .divide-gray-100 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(51 65 85); }
+
+html.dark .text-gray-900    { color: rgb(241 245 249); }                /* slate-100 */
+html.dark .text-gray-800    { color: rgb(226 232 240); }                /* slate-200 */
+html.dark .text-gray-700    { color: rgb(203 213 225); }                /* slate-300 */
+html.dark .text-gray-600    { color: rgb(148 163 184); }                /* slate-400 */
+html.dark .text-gray-500    { color: rgb(148 163 184); }
+html.dark .text-gray-400    { color: rgb(100 116 139); }                /* slate-500 */
+html.dark .text-gray-300    { color: rgb(71 85 105); }                  /* slate-600 */
+
+html.dark .hover\:text-gray-800:hover { color: rgb(226 232 240); }
+
+/* Inputs */
+html.dark input,
+html.dark select,
+html.dark textarea {
+  background-color: rgb(30 41 59);
+  color: rgb(241 245 249);
+  border-color: rgb(71 85 105);
+}
+html.dark input::placeholder { color: rgb(100 116 139); }
+
+/* Soft accent backgrounds — tweak for contrast on dark */
+html.dark .bg-amber-50      { background-color: rgba(245, 158, 11, 0.12); }
+html.dark .border-amber-200 { border-color: rgba(245, 158, 11, 0.35); }
+html.dark .text-amber-900   { color: rgb(252 211 77); }
+html.dark .text-amber-700   { color: rgb(251 191 36); }
+html.dark .bg-red-50        { background-color: rgba(239, 68, 68, 0.12); }
+html.dark .border-red-200   { border-color: rgba(239, 68, 68, 0.35); }
+html.dark .text-red-800     { color: rgb(252 165 165); }
+html.dark .text-red-600     { color: rgb(248 113 113); }
+html.dark .bg-blue-50       { background-color: rgba(59, 130, 246, 0.15); }
+html.dark .text-blue-700    { color: rgb(96 165 250); }
+html.dark .text-blue-600    { color: rgb(96 165 250); }
