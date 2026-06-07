@@ -29,6 +29,9 @@ export async function GET() {
 
     // === Posición parcialmente vendida (lo no vendido sigue como posición abierta) ===
     ['10/05/2024', 'AAPL',    'Apple Inc.',                'Acción', 'Venta',  5,   195.00,  5.00, 'USD'],
+
+    // === Liquidez (efectivo en cuenta) — el ticker es libre, precio = 1 ===
+    ['01/06/2024', 'CASH-EUR', 'Liquidez EUR',             'Liquidez', 'Compra', 5000, 1, 0, 'EUR'],
   ];
 
   const ws = XLSX.utils.aoa_to_sheet([headers, ...examples]);
@@ -50,7 +53,7 @@ export async function GET() {
     ['Fecha',       'Fecha de la operación (DD/MM/AAAA)'],
     ['Ticker',      'Símbolo del activo en Yahoo Finance (ej: AAPL, BTC-USD, VWRA.L)'],
     ['Nombre',      'Nombre descriptivo del activo'],
-    ['Tipo_Activo', 'Tipo: Acción | ETF | Cripto | Bono | REIT | Otro'],
+    ['Tipo_Activo', 'Tipo: Acción | ETF | Cripto | Bono | REIT | Liquidez | Otro'],
     ['Operacion',   'Tipo de operación: Compra | Venta'],
     ['Cantidad',    'Número de acciones/unidades'],
     ['Precio',      'Precio por unidad (sin incluir comisión)'],
@@ -76,6 +79,12 @@ export async function GET() {
     ['POSICIONES ABIERTAS vs CERRADAS:'],
     ['Abiertas',               'Activos que sigues teniendo. La rentabilidad usa el precio actual del mercado.'],
     ['Cerradas',               'Compras + ventas emparejadas. La rentabilidad es definitiva (realizada).'],
+    [''],
+    ['LIQUIDEZ (EFECTIVO EN CUENTA):'],
+    ['',                       'Usa el tipo "Liquidez" para registrar el efectivo que tienes en el broker.'],
+    ['',                       'No se consulta cotización: precio = 1 y Cantidad = importe en EUR / USD / etc.'],
+    ['',                       'Ticker libre (ej: CASH-EUR, CASH-USD). Una "Compra" añade efectivo, una "Venta"'],
+    ['',                       'lo reduce — útil para modelar cuándo mueves dinero a una nueva posición.'],
   ];
   const wsInfo = XLSX.utils.aoa_to_sheet(infoData);
   wsInfo['!cols'] = [{ wch: 25 }, { wch: 50 }];

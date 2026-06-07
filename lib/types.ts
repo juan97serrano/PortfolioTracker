@@ -1,4 +1,4 @@
-export type AssetType = 'Acción' | 'ETF' | 'Cripto' | 'Bono' | 'REIT' | 'Otro';
+export type AssetType = 'Acción' | 'ETF' | 'Cripto' | 'Bono' | 'REIT' | 'Liquidez' | 'Otro';
 export type OperationType = 'Compra' | 'Venta';
 
 export interface Transaction {

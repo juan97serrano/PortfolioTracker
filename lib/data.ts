@@ -64,11 +64,15 @@ export async function fetchPortfolio(): Promise<PortfolioSummary> {
 
   const positions: Position[] = await Promise.all(
     rawPositions.map(async (raw) => {
-      const [quote, profile] = await Promise.all([
-        getQuote(raw.ticker),
-        getAssetProfile(raw.ticker),
-      ]);
-      const currentPrice     = quote?.price ?? 0;
+      const isCash = raw.assetType === 'Liquidez';
+
+      // Cash positions don't have a market quote — price is always 1 in their
+      // own currency, and they don't move day-to-day.
+      const [quote, profile] = isCash
+        ? [null, null]
+        : await Promise.all([getQuote(raw.ticker), getAssetProfile(raw.ticker)]);
+
+      const currentPrice     = isCash ? 1 : (quote?.price ?? 0);
       const priceCurrency    = quote?.currency ?? raw.currency;
       const currentValue     = currentPrice * raw.shares;
       const currentValueEur  = convertToEur(currentValue, priceCurrency, rates);
@@ -85,10 +89,10 @@ export async function fetchPortfolio(): Promise<PortfolioSummary> {
         returnAbs:    currentValue - raw.costBasis,
         returnAbsEur,
         returnPct,
-        dayChangePct: quote?.dayChangePct ?? 0,
+        dayChangePct: isCash ? 0 : (quote?.dayChangePct ?? 0),
         weight: 0, // filled in buildPortfolioSummary
-        sector:       profile?.sector,
-        industry:     profile?.industry,
+        sector:       isCash ? 'Liquidez' : profile?.sector,
+        industry:     isCash ? 'Efectivo' : profile?.industry,
       };
     })
   );

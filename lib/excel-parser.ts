@@ -78,12 +78,14 @@ export async function parseExcelBuffer(buffer: ArrayBuffer): Promise<Transaction
     const ticker = String(row[tickerCol] ?? '').trim().toUpperCase();
     if (!ticker) continue;
 
-    const qty = Number(row[qtyCol]) || 0;
-    const price = Number(row[priceCol]) || 0;
-    if (qty <= 0 || price <= 0) continue;
-
     const rawType = String(row[typeCol] ?? 'Acción').trim();
     const rawOp   = String(row[opCol]   ?? 'Compra').trim();
+    const isCash  = rawType.toLowerCase() === 'liquidez';
+
+    const qty = Number(row[qtyCol]) || 0;
+    // Cash rows: price is the unit value (1 by default). Quantity is the amount.
+    const price = Number(row[priceCol]) || (isCash ? 1 : 0);
+    if (qty <= 0 || price <= 0) continue;
 
     transactions.push({
       date:       parseExcelDate(row[dateCol]).toISOString(),
@@ -125,15 +127,20 @@ export async function parseCsvText(text: string): Promise<Transaction[]> {
     const ticker = (cols[tickerCol] ?? '').trim().toUpperCase();
     if (!ticker) continue;
 
+    const rawType = (cols[typeCol] ?? 'Acción').trim();
+    const isCash  = rawType.toLowerCase() === 'liquidez';
+
     const qty   = parseFloat((cols[qtyCol]   ?? '0').replace(',', '.')) || 0;
-    const price = parseFloat((cols[priceCol] ?? '0').replace(',', '.')) || 0;
+    const price =
+      parseFloat((cols[priceCol] ?? '0').replace(',', '.')) ||
+      (isCash ? 1 : 0);
     if (qty <= 0 || price <= 0) continue;
 
     transactions.push({
       date:       parseExcelDate(cols[dateCol]).toISOString(),
       ticker,
       name:       (cols[nameCol] ?? ticker).trim(),
-      assetType:  (cols[typeCol] ?? 'Acción').trim() as AssetType,
+      assetType:  rawType as AssetType,
       operation:  (cols[opCol]   ?? 'Compra').trim() as OperationType,
       quantity:   qty,
       price,

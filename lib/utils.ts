@@ -92,6 +92,7 @@ export const ASSET_TYPE_COLORS: Record<string, string> = {
   'Cripto': '#f59e0b',
   'Bono': '#10b981',
   'REIT': '#ec4899',
+  'Liquidez': '#64748b',
   'Otro': '#6b7280',
 };
 
