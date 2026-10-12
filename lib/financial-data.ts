@@ -1,4 +1,4 @@
-import type { QuoteResult, FinancialRatios, NewsItem, PricePoint, PriceRange, DividendEvent } from './types';
+import type { QuoteResult, FinancialRatios, NewsItem, PricePoint, PriceRange, DividendEvent, IntradayQuote, IntradayPoint } from './types';
 
 const YF_HEADERS = {
   'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
@@ -10,6 +10,9 @@ interface YFMeta {
   previousClose?: number;
   regularMarketChangePercent?: number;
   currency?: string;
+  chartPreviousClose?: number;
+  shortName?: string;
+  currentTradingPeriod?: { regular?: { start?: number; end?: number } };
 }
 
 interface YFChartResponse {
@@ -344,6 +347,56 @@ export async function getPriceHistory(ticker: string, range: PriceRange = '1y'):
     return points;
   } catch {
     return [];
+  }
+}
+
+// Intraday 5-minute series for the current (or last) session. Used by the live
+// dashboard, so the cache is much shorter than getQuote's.
+export async function getIntraday(symbol: string, revalidate = 60): Promise<IntradayQuote | null> {
+  try {
+    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=5m&range=1d`;
+    const res = await fetch(url, {
+      headers: YF_HEADERS,
+      next: { revalidate },
+    });
+    if (!res.ok) return null;
+
+    const data = (await res.json()) as YFChartFullResponse;
+    const result = data.chart?.result?.[0];
+    const meta = result?.meta;
+    if (!meta) return null;
+
+    const timestamps = result?.timestamp ?? [];
+    const closes = result?.indicators?.quote?.[0]?.close ?? [];
+    const points: IntradayPoint[] = [];
+    for (let i = 0; i < timestamps.length; i++) {
+      const close = closes[i];
+      if (typeof close !== 'number' || !Number.isFinite(close)) continue;
+      points.push({ t: timestamps[i], p: close });
+    }
+
+    const price = meta.regularMarketPrice ?? points[points.length - 1]?.p ?? 0;
+    const prevClose = meta.previousClose ?? meta.chartPreviousClose ?? price;
+    const change = price - prevClose;
+    const session = meta.currentTradingPeriod?.regular;
+    const now = Date.now() / 1000;
+    const isOpen = !!session?.start && !!session?.end && now >= session.start && now < session.end;
+
+    return {
+      symbol,
+      name: meta.shortName ?? symbol,
+      price,
+      prevClose,
+      change,
+      changePct: prevClose ? (change / prevClose) * 100 : 0,
+      currency: meta.currency ?? 'USD',
+      isOpen,
+      sessionStart: session?.start,
+      sessionEnd: session?.end,
+      points,
+    };
+  } catch {
+    return null;
   }
 }
 

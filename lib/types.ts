@@ -153,3 +153,97 @@ export interface NewsItem {
   publishedAt: string; // ISO date string
   thumbnail?: string;
 }
+
+// ── Live dashboard ────────────────────────────────────────────────────────────
+
+export interface IntradayPoint {
+  t: number; // unix seconds
+  p: number;
+}
+
+export interface IntradayQuote {
+  symbol: string;
+  name: string;
+  price: number;
+  prevClose: number;
+  change: number;
+  changePct: number;
+  currency: string;
+  isOpen: boolean;
+  sessionStart?: number; // unix seconds, current/last regular session
+  sessionEnd?: number;
+  points: IntradayPoint[];
+}
+
+export type MarketGroupId = 'indices' | 'rates' | 'fx' | 'commodities' | 'crypto';
+
+export interface LiveQuote extends IntradayQuote {
+  label: string;
+  decimals: number;
+  // Yields are shown with change in basis points instead of %.
+  kind: 'price' | 'yield';
+}
+
+export interface MarketSession {
+  id: string;
+  label: string;
+  timeZone: string;
+  isOpen: boolean;
+  sessionStart?: number;
+  sessionEnd?: number;
+}
+
+export interface LivePosition {
+  ticker: string;
+  name: string;
+  assetType: AssetType;
+  valueEur: number;
+  weight: number;
+  dayPnlEur: number;
+  dayChangePct: number;
+  returnPct: number;
+  isOpen: boolean;
+}
+
+export interface LivePortfolio {
+  valueEur: number;
+  investedEur: number;
+  unrealizedEur: number;
+  unrealizedPct: number;
+  dayPnlEur: number;
+  dayPnlPct: number;
+  cashEur: number;
+  positions: LivePosition[];
+  pnlCurve: { t: number; v: number }[];
+}
+
+export interface LiveSnapshot {
+  generatedAt: string;
+  portfolio: LivePortfolio | null;
+  portfolioError?: string;
+  markets: Record<MarketGroupId, LiveQuote[]>;
+  sessions: MarketSession[];
+}
+
+export interface LiveNewsItem extends NewsItem {
+  ticker: string;
+}
+
+export interface LiveEarnings {
+  ticker: string;
+  name: string;
+  date: string; // ISO
+  epsEstimate?: number;
+}
+
+export interface CentralBankMeeting {
+  bank: string;
+  date: string; // ISO date (decision day)
+}
+
+export interface LiveFeed {
+  generatedAt: string;
+  news: LiveNewsItem[];
+  earnings: LiveEarnings[];
+  centralBanks: CentralBankMeeting[];
+}

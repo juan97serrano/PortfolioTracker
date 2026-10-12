@@ -12,7 +12,7 @@ import { ConcentrationAlert } from '@/components/ConcentrationAlert';
 import { GroupedAllocationChart } from '@/components/SectorChart';
 import { PortfolioHistoryChart } from '@/components/PortfolioHistoryChart';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { AlertCircle, Download, GitCompare } from 'lucide-react';
+import { Activity, AlertCircle, Download, GitCompare } from 'lucide-react';
 import type { PortfolioSummary } from '@/lib/types';
 
 export const revalidate = 0;
@@ -114,6 +114,13 @@ export default async function Home() {
           )}
         </div>
         <div className="flex items-center gap-3">
+          <Link
+            href="/live"
+            className="inline-flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-800 transition-colors"
+          >
+            <Activity className="h-3.5 w-3.5" />
+            Panel en vivo
+          </Link>
           <Link
             href="/compare"
             className="inline-flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-800 transition-colors"
